@@ -167,7 +167,7 @@ class Facebook
 		$offset = $offset * -1;
 		$dateTime->modify($offset .' seconds');
 
-		// return
+		// return the dat
 		return $dateTime->format('U');
 	}
 
@@ -181,7 +181,7 @@ class Facebook
 	 * @param	string[optional] $method			Which method should be used?
 	 * @param	string[optional] $authorization		Should the call authorize itself.
 	 */
-	private function doCall($url, array $parameters = null, $method = 'GET', $authorization = false)
+	private function doCall($url, array $parameters = null, $method = 'GET', $file = null, $authorization = false)
 	{
 		// redefine
 		$url = (string) $url;
@@ -224,8 +224,45 @@ class Facebook
 		$options[CURLOPT_RETURNTRANSFER] = true;
 		$options[CURLOPT_TIMEOUT] = (int) $this->getTimeOut();
 
+		if($file !== null)
+		{
+			// build a boundary
+			$boundary = md5(time());
+
+			// init var
+			$content[] = '--'. $boundary;
+
+			// loop parameters and add them
+			foreach($parameters as $key => $value) $content[] = 'Content-Disposition: form-data; name="'. $key .'"'. "\r\n\r\n" . $value . "\r\n" .'--'. $boundary;
+
+			// process file
+			$fileInfo = pathinfo($file);
+			$mimeType = (isset($this->mimeTypes[$fileInfo['extension']])) ? $this->mimeTypes[$fileInfo['extension']] : $this->mimeTypes['default'];
+			$fileContent = @file_get_contents($file);
+
+			if($fileContent !== false)
+			{
+				// set file
+				$content[] = 'Content-Disposition: form-data; filename="'. $fileInfo['basename'] .'"' ."\r\n" . 'Content-Type: '. $mimeType . "\r\n\r\n" . $fileContent ."\r\n--". $boundary;
+
+				// end
+				$content[] = array_pop($content) .'--';
+				$content = implode("\r\n", $content);
+
+				// build headers
+				$header[] = 'Content-Type: multipart/form-data; boundary=' . $boundary;
+				$header[] = 'MIME-version: 1.0';
+				$header[] = 'Content-Length: '. strlen($content);
+
+				// set options
+				$options[CURLOPT_HTTPHEADER] = $header;
+				$options[CURLOPT_POST] = true;
+				$options[CURLOPT_POSTFIELDS] = $content;
+			}
+		}
+
 		// init
-		if($this->curl === null) $this->curl = curl_init();
+		$this->curl = curl_init();
 
 		// set options
 		curl_setopt_array($this->curl, $options);
@@ -257,6 +294,7 @@ class Facebook
 			{
 				echo '<pre>'."\n";
 				var_dump($headers);
+				var_dump($json);
 				echo '</pre>'."\n";
 			}
 
@@ -298,16 +336,21 @@ class Facebook
 		$url = self::REST_API_URL .'/'. $url;
 
 		// append access token
-		if(strpos($url, '?') != false) $url .= '&access_token='. $this->getToken();
-		else $url .= '?access_token='. $this->getToken();
+		$parameters['access_token'] = $this->getToken();
+//		if(strpos($url, '?') != false) $url .= '&access_token='. $this->getToken();
+//		else $url .= '?access_token='. $this->getToken();
 
 		// set options
 		$options[CURLOPT_URL] = $url;
 		$options[CURLOPT_PORT] = self::API_PORT;
 		$options[CURLOPT_USERAGENT] = $this->getUserAgent();
 		$options[CURLOPT_FOLLOWLOCATION] = true;
+		$options[CURLOPT_SSL_VERIFYPEER] = false;
+		$options[CURLOPT_SSL_VERIFYHOST] = false;
 		$options[CURLOPT_RETURNTRANSFER] = true;
 		$options[CURLOPT_TIMEOUT] = (int) $this->getTimeOut();
+		$options[CURLOPT_POST] = false;
+		$options[CURLOPT_POSTFIELDS] = null;
 
 		if($file !== null)
 		{
@@ -347,7 +390,7 @@ class Facebook
 		}
 
 		// init
-		if($this->curl === null) $this->curl = curl_init();
+		$this->curl = curl_init();
 
 		// set options
 		curl_setopt_array($this->curl, $options);
@@ -548,21 +591,31 @@ class Facebook
 	}
 
 
-	// api methods
-
-
-	public function publish($url, array $parameters = null)
+	/**
+	 * Publish something on Facebook
+	 *
+	 * @return	mixed
+	 * @param	string $url			The URL to call.
+	 * @param	array $parameters	The parameters to push.
+	 * @param	string $file		A file that should be posted
+	 */
+	public function publish($url, array $parameters = null, $file = null)
 	{
 		// redefine
 		$url = (string) $url;
 
 		// make the call
-		$response = $this->doCall($url, $parameters, 'POST');
-
-		return $response;
+		return $this->doCall($url, $parameters, 'POST', $file);
 	}
 
 
+	/**
+	 * Retrieve from Facebook
+	 *
+	 * @return	mixed
+	 * @param	string $url			The URL to call.
+	 * @param	array $parameters	The parameters to push.
+	 */
 	public function get($url, array $parameters = null)
 	{
 		// redefine
@@ -674,123 +727,6 @@ class Facebook
 		// return
 		return $data;
 	}
-
-
-// event methods
-	/**
-	 * Cancels an event. The application must be an admin of the event.
-	 *
-	 * @return	bool
-	 * @param	string $id					The event ID.
-	 * @param	string[optional] $message	The message sent explaining why the event was canceled.
-	 */
-	public function eventsCancel($id, $message = null)
-	{
-		// build parameters
-		$parameters['eid'] = (string) $id;
-		$parameters['cancel_message'] = (string) $message;
-
-		// make the call
-		return (bool) ($this->doRESTAPICall('events.cancel', $parameters) == 1);
-	}
-
-
-	/**
-	 * Create an event
-	 *
-	 * @return	string						The id of the event
-	 * @param	array $event				An array representing the event.
-	 * @param	string[optional] $picture	The path to the file.
-	 */
-	public function eventsCreate(array $event, $picture = null)
-	{
-		// build parameters
-		$parameters['event_info'] = json_encode($event);
-
-		// make the call
-		return (string) $this->doRESTAPICall('events.create', $parameters, $picture);
-	}
-
-
-	/**
-	 * Edit an event
-	 *
-	 * @return	bool
-	 * @param	string $id					The id of the event
-	 * @param	array $event				An array representing the event.
-	 * @param	string[optional] $picture	The path to the file.
-	 */
-	public function eventsEdit($id, array $event, $picture = null)
-	{
-		// build parameters
-		$parameters['eid'] = (string) $id;
-		$parameters['event_info'] = json_encode($event);
-
-		// make the call
-		return (bool) ($this->doRESTAPICall('events.edit', $parameters, $picture) == 1);
-	}
-
-
-	public function eventsGet($uid = null, array $eids = null, $startTime = null, $endTime = null, $rsvp = null)
-	{
-		throw new FacebookException('Not implemented yet');
-	}
-
-
-	public function eventsGetMembers($id)
-	{
-		throw new FacebookException('Not implemented yet');
-	}
-
-
-	public function eventsInvite($id, array $uids, $message = null)
-	{
-		throw new FacebookException('Not implemented yet');
-	}
-
-
-	public function eventsRSVP($id, $rsvp)
-	{
-		throw new FacebookException('Not implemented yet');
-
-		// possible status
-		$possibleStatuses = array('attending', 'unsure', 'declined');
-
-		// redefine
-		$id = (string) $id;
-		$rsvp = (string) $rsvp;
-
-		// validate
-		if(!in_array($rsvp, $possibleStatuses)) throw new FacebookException('Invalid RSVP-status ('. $rsvp .'), allowed values are: '. implode(', ', $possibleStatuses) .'.');
-
-		// build parameters
-		$parameters['eid'] = $id;
-		$parameters['rsvp_status'] = $rsvp;
-
-		$response = $this->doRESTAPICall('events.rsvp', $parameters);
-
-		// @todo	implement me for real
-		Spoon::dump($response);
-	}
-
-
-// stream methods
-	public function streamPublish($message, array $attachment = null, array $actionLinks = null, $targetId = null, $uid = null, array $privacy = null)
-	{
-		// build parameters
-		$parameters['message'] = (string) $message;
-
-		if($attachment !== null) $parameters['attachment'] = json_encode($attachment);
-		if($actionLinks !== null) $parameters['action_links'] = json_encode($actionLinks);
-		if($targetId !== null) $parameters['target_id'] = (string) $targetId;
-		if($uid !== null) $parameters['uid'] = (string) $uid;
-		if($privacy !== null) $parameters['privacy'] = json_encode($privacy);
-
-		// make the call
-		return (string) $this->doRESTAPICall('stream.publish', $parameters);
-	}
-
-
 }
 
 
