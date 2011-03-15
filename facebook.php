@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Facebook class
  *
@@ -144,7 +145,7 @@ class Facebook
 	 * Inspired on http://forum.developers.facebook.com/viewtopic.php?pid=129685
 	 *
 	 * @return	string			A string that Facebook understands
-	 * @param	int $timestamp	The GMT-timestamp
+	 * @param	int $timestamp	The GMT-timestamp.
 	 */
 	public static function createFacebookDate($timestamp)
 	{
@@ -165,7 +166,7 @@ class Facebook
 
 		// Facebook adds it timezone offset to the recieved timestamp, so fuck with their code and add the offset that will be substracted
 		$offset = $offset * -1;
-		$dateTime->modify($offset .' seconds');
+		$dateTime->modify($offset . ' seconds');
 
 		// return the dat
 		return $dateTime->format('U');
@@ -177,8 +178,9 @@ class Facebook
 	 *
 	 * @return	array
 	 * @param	string $url							The URL to call.
-	 * @param	array $parameters					The parameters that should be passes.
+	 * @param	array[optional] $parameters			The parameters that should be passes.
 	 * @param	string[optional] $method			Which method should be used?
+	 * @param	string[optional] $file				Path to the file that should be posted.
 	 * @param	string[optional] $authorization		Should the call authorize itself.
 	 */
 	private function doCall($url, array $parameters = null, $method = 'GET', $file = null, $authorization = false)
@@ -194,7 +196,7 @@ class Facebook
 		if($method == 'GET')
 		{
 			// append to url
-			if(!empty($parameters)) $url .= '?'. http_build_query($parameters, null, '&');
+			if(!empty($parameters)) $url .= '?' . http_build_query($parameters, null, '&');
 		}
 
 		// through POST
@@ -205,13 +207,13 @@ class Facebook
 		}
 
 		// prepend
-		$url = self::API_URL .'/'. $url;
+		$url = self::API_URL . '/' . $url;
 
 		// add token
 		if(!$authorization)
 		{
-			if(strpos($url, '?') != false) $url .= '&access_token='. $this->getToken();
-			else $url .= '?access_token='. $this->getToken();
+			if(strpos($url, '?') != false) $url .= '&access_token=' . $this->getToken();
+			else $url .= '?access_token=' . $this->getToken();
 		}
 
 		// set options
@@ -230,10 +232,10 @@ class Facebook
 			$boundary = md5(time());
 
 			// init var
-			$content[] = '--'. $boundary;
+			$content[] = '--' . $boundary;
 
 			// loop parameters and add them
-			foreach($parameters as $key => $value) $content[] = 'Content-Disposition: form-data; name="'. $key .'"'. "\r\n\r\n" . $value . "\r\n" .'--'. $boundary;
+			foreach($parameters as $key => $value) $content[] = 'Content-Disposition: form-data; name="' . $key . '"' . "\r\n\r\n" . $value . "\r\n" . '--' . $boundary;
 
 			// process file
 			$fileInfo = pathinfo($file);
@@ -243,16 +245,16 @@ class Facebook
 			if($fileContent !== false)
 			{
 				// set file
-				$content[] = 'Content-Disposition: form-data; filename="'. $fileInfo['basename'] .'"' ."\r\n" . 'Content-Type: '. $mimeType . "\r\n\r\n" . $fileContent ."\r\n--". $boundary;
+				$content[] = 'Content-Disposition: form-data; filename="' . $fileInfo['basename'] . '"' . "\r\n" . 'Content-Type: ' . $mimeType . "\r\n\r\n" . $fileContent . "\r\n--" . $boundary;
 
 				// end
-				$content[] = array_pop($content) .'--';
+				$content[] = array_pop($content) . '--';
 				$content = implode("\r\n", $content);
 
 				// build headers
 				$header[] = 'Content-Type: multipart/form-data; boundary=' . $boundary;
 				$header[] = 'MIME-version: 1.0';
-				$header[] = 'Content-Length: '. strlen($content);
+				$header[] = 'Content-Length: ' . strlen($content);
 
 				// set options
 				$options[CURLOPT_HTTPHEADER] = $header;
@@ -292,10 +294,10 @@ class Facebook
 		{
 			if(self::DEBUG)
 			{
-				echo '<pre>'."\n";
+				echo '<pre>' . "\n";
 				var_dump($headers);
 				var_dump($json);
-				echo '</pre>'."\n";
+				echo '</pre>' . "\n";
 			}
 
 			// init var
@@ -303,7 +305,7 @@ class Facebook
 			$message = (isset($json['error']['message'])) ? $json['error']['message'] : '';
 
 			// build real message
-			if($type != '') $message = trim($type .': '. $message);
+			if($type != '') $message = trim($type . ': ' . $message);
 
 			// throw error
 			throw new FacebookException($message);
@@ -317,9 +319,10 @@ class Facebook
 	/**
 	 * Make the call (to the REST API)
 	 *
+	 * @return	SimpleXMLElement
 	 * @param	string $url						The URL to call.
 	 * @param	array[optional] $parameters		The parameters that should be passes.
-	 * @param	string[optional] $file			The path to the file to upload
+	 * @param	string[optional] $file			The path to the file to upload.
 	 */
 	private function doRESTAPICall($url, array $parameters = null, $file = null)
 	{
@@ -330,10 +333,10 @@ class Facebook
 		$queryString = '';
 
 		// append to url
-		if($file === null) $url .= '?'. http_build_query($parameters, null, '&');
+		if($file === null) $url .= '?' . http_build_query($parameters, null, '&');
 
 		// prepend
-		$url = self::REST_API_URL .'/'. $url;
+		$url = self::REST_API_URL . '/' . $url;
 
 		// append access token
 		$parameters['access_token'] = $this->getToken();
@@ -358,10 +361,10 @@ class Facebook
 			$boundary = md5(time());
 
 			// init var
-			$content[] = '--'. $boundary;
+			$content[] = '--' . $boundary;
 
 			// loop parameters and add them
-			foreach($parameters as $key => $value) $content[] = 'Content-Disposition: form-data; name="'. $key .'"'. "\r\n\r\n" . $value . "\r\n" .'--'. $boundary;
+			foreach($parameters as $key => $value) $content[] = 'Content-Disposition: form-data; name="' . $key . '"' . "\r\n\r\n" . $value . "\r\n" . '--' . $boundary;
 
 			// process file
 			$fileInfo = pathinfo($file);
@@ -371,16 +374,16 @@ class Facebook
 			if($fileContent !== false)
 			{
 				// set file
-				$content[] = 'Content-Disposition: form-data; filename="'. $fileInfo['basename'] .'"' ."\r\n" . 'Content-Type: '. $mimeType . "\r\n\r\n" . $fileContent ."\r\n--". $boundary;
+				$content[] = 'Content-Disposition: form-data; filename="' . $fileInfo['basename'] . '"' . "\r\n" . 'Content-Type: ' . $mimeType . "\r\n\r\n" . $fileContent . "\r\n--" . $boundary;
 
 				// end
-				$content[] = array_pop($content) .'--';
+				$content[] = array_pop($content) . '--';
 				$content = implode("\r\n", $content);
 
 				// build headers
 				$header[] = 'Content-Type: multipart/form-data; boundary=' . $boundary;
 				$header[] = 'MIME-version: 1.0';
-				$header[] = 'Content-Length: '. strlen($content);
+				$header[] = 'Content-Length: ' . strlen($content);
 
 				// set options
 				$options[CURLOPT_HTTPHEADER] = $header;
@@ -461,7 +464,7 @@ class Facebook
 	private function getToken()
 	{
 		// no token available
-		if($this->token == null) return $this->getApplicationId() .'|'. $this->getApplicationSecret();
+		if($this->token == null) return $this->getApplicationId() . '|' . $this->getApplicationSecret();
 
 		// real token
 		return $this->token;
@@ -487,7 +490,7 @@ class Facebook
 	 */
 	public function getUserAgent()
 	{
-		return (string) 'PHP Facebook/'. self::VERSION .' '. $this->userAgent;
+		return (string) 'PHP Facebook/' . self::VERSION . ' ' . $this->userAgent;
 	}
 
 
@@ -570,7 +573,7 @@ class Facebook
 	 * After this time the request will stop. You should handle any errors triggered by this.
 	 *
 	 * @return	void
-	 * @param	int $seconds	The timeout in seconds
+	 * @param	int $seconds	The timeout expressed in seconds.
 	 */
 	public function setTimeOut($seconds)
 	{
@@ -583,7 +586,7 @@ class Facebook
 	 * It will be appended to ours, the result will look like: "PHP Bitly/<version> <your-user-agent>"
 	 *
 	 * @return	void
-	 * @param	string $userAgent	Your user-agent, it should look like <app-name>/<app-version>
+	 * @param	string $userAgent	Your user-agent, it should look like <app-name>/<app-version>.
 	 */
 	public function setUserAgent($userAgent)
 	{
@@ -595,9 +598,9 @@ class Facebook
 	 * Publish something on Facebook
 	 *
 	 * @return	mixed
-	 * @param	string $url			The URL to call.
-	 * @param	array $parameters	The parameters to push.
-	 * @param	string $file		A file that should be posted
+	 * @param	string $url						The URL to call.
+	 * @param	array[optional] $parameters		The parameters to push.
+	 * @param	string[optional] $file			A file that should be posted.
 	 */
 	public function publish($url, array $parameters = null, $file = null)
 	{
@@ -613,8 +616,8 @@ class Facebook
 	 * Retrieve from Facebook
 	 *
 	 * @return	mixed
-	 * @param	string $url			The URL to call.
-	 * @param	array $parameters	The parameters to push.
+	 * @param	string $url						The URL to call.
+	 * @param	array[optional] $parameters		The parameters to push.
 	 */
 	public function get($url, array $parameters = null)
 	{
@@ -671,7 +674,7 @@ class Facebook
 				$message = (isset($json['error']['message'])) ? $json['error']['message'] : '';
 
 				// build real message
-				if($type != '') $message = trim($type .': '. $message);
+				if($type != '') $message = trim($type . ': ' . $message);
 
 				// throw error
 				throw new FacebookException($message);
@@ -697,7 +700,7 @@ class Facebook
 	public function getCookie()
 	{
 		// build the cookie name
-		$cookieName = 'fbs_'. $this->getApplicationId();
+		$cookieName = 'fbs_' . $this->getApplicationId();
 
 		// validate
 		if(!isset($_COOKIE[$cookieName])) return false;
@@ -718,7 +721,7 @@ class Facebook
 		// loop data
 		foreach($data as $key => $value)
 		{
-			if($key != 'sig') $payload .= $key .'='. $value;
+			if($key != 'sig') $payload .= $key . '=' . $value;
 		}
 
 		// validate data
