@@ -11,6 +11,7 @@
  * Changelog since 1.0.0
  * - API-key isn't used anymore.
  * - Removed datefunction, because it isn't used anymore.
+ * - Don't use a global curl instance anymore.
  *
  * License
  * Copyright (c) Tijs Verkoyen. All rights reserved.
@@ -205,18 +206,21 @@ class Facebook
 		}
 
 		// init
-		$this->curl = curl_init();
+		$curl = curl_init();
 
 		// set options
-		curl_setopt_array($this->curl, $options);
+		curl_setopt_array($curl, $options);
 
 		// execute
-		$response = curl_exec($this->curl);
-		$headers = curl_getinfo($this->curl);
+		$response = curl_exec($curl);
+		$headers = curl_getinfo($curl);
 
 		// fetch errors
-		$errorNumber = curl_errno($this->curl);
-		$errorMessage = curl_error($this->curl);
+		$errorNumber = curl_errno($curl);
+		$errorMessage = curl_error($curl);
+
+		// close
+		curl_close($curl);
 
 		// error?
 		if($errorNumber != '') throw new FacebookException($errorMessage, $errorNumber);
@@ -331,18 +335,21 @@ class Facebook
 		}
 
 		// init
-		$this->curl = curl_init();
+		$curl = curl_init();
 
 		// set options
-		curl_setopt_array($this->curl, $options);
+		curl_setopt_array($curl, $options);
 
 		// execute
-		$response = curl_exec($this->curl);
-		$headers = curl_getinfo($this->curl);
+		$response = curl_exec($curl);
+		$headers = curl_getinfo($curl);
 
 		// fetch errors
-		$errorNumber = curl_errno($this->curl);
-		$errorMessage = curl_error($this->curl);
+		$errorNumber = curl_errno($curl);
+		$errorMessage = curl_error($curl);
+
+		// close
+		curl_close($curl);
 
 		// error?
 		if($errorNumber != '') throw new FacebookException($errorMessage, $errorNumber);
