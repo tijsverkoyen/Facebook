@@ -13,6 +13,7 @@
  * - Removed datefunction, because it isn't used anymore.
  * - Don't use a global curl instance anymore.
  * - Bugfix: when getting teh access token a file was submitted.
+ * - Implemented signed cookies, thx to Davy Van Vooren.
  *
  * License
  * Copyright (c) Tijs Verkoyen. All rights reserved.
@@ -617,37 +618,61 @@ class Facebook
 	/**
 	 * Get a facebook cookie and process it
 	 *
-	 * @return	array	If invalid or no cookie it will return false
+	 * @return	array	If invalid or no cookie it will return false.
 	 */
 	public function getCookie()
 	{
 		// build the cookie name
-		$cookieName = 'fbs_' . $this->getApplicationId();
+		$cookieName = 'fbs_'. $this->getApplicationId();
+		$cookieNameSignedRequest = 'fbsr_'. $this->getApplicationId();
 
 		// validate
-		if(!isset($_COOKIE[$cookieName])) return false;
+		if(!isset($_COOKIE[$cookieName]) && !isset($_COOKIE[$cookieNameSignedRequest])) return false;
 
 		// init var
 		$data = array();
 
-		// parse the cookie into the data
-		parse_str(trim($_COOKIE[$cookieName], '"'), $data);
-
-		// validate
-		if(!isset($data['sig'])) return false;
-
-		// sort the data
-		ksort($data);
-		$payload = '';
-
-		// loop data
-		foreach($data as $key => $value)
+		// has signed request cookie
+		if(isset($_COOKIE[$cookieNameSignedRequest]))
 		{
-			if($key != 'sig') $payload .= $key . '=' . $value;
+			list($encodedSignature, $payload) = explode('.', $_COOKIE[$cookieNameSignedRequest], 2);
+
+			// decode the data
+			$data = json_decode(base64_decode(strtr($payload, '-_', '+/')), true);
+
+			try
+			{
+				$accessToken = $this->getAccessToken($data['code'], '');
+				$this->setToken($accessToken);
+			}
+			catch(FacebookException $e)
+			{
+				if(substr_count($e->getMessage(), 'Code was invalid or expired.')) return $data;
+			}
 		}
 
-		// validate data
-		if(md5($payload . $this->getApplicationSecret()) != $data['sig']) return false;
+		// non signed cookie
+		if(isset($_COOKIE[$cookieName]))
+		{
+			// parse the cookie into the data
+			parse_str(trim($_COOKIE[$cookieName], '"'), $data);
+
+			// validate
+			if(!isset($data['sig'])) return false;
+
+			// sort the data
+			ksort($data);
+			$payload = '';
+
+			// loop data
+			foreach($data as $key => $value)
+			{
+				if($key != 'sig') $payload .= $key .'='. $value;
+			}
+
+			// validate data
+			if(md5($payload . $this->getApplicationSecret()) != $data['sig']) return false;
+		}
 
 		// return
 		return $data;
