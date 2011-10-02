@@ -369,17 +369,6 @@ class Facebook
 
 
 	/**
-	 * Get the API key
-	 *
-	 * @return	string
-	 */
-	private function getApiKey()
-	{
-		return $this->apiKey;
-	}
-
-
-	/**
 	 * Get the application id
 	 *
 	 * @return	string
@@ -474,18 +463,6 @@ class Facebook
 	public function setToken($token)
 	{
 		$this->token = (string) $token;
-	}
-
-
-	/**
-	 * Set the API-key
-	 *
-	 * @return	void
-	 * @param	string $apiKey
-	 */
-	private function setApiKey($apiKey)
-	{
-		$this->apiKey = (string) $apiKey;
 	}
 
 
