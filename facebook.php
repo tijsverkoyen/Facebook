@@ -121,6 +121,7 @@ class Facebook
 	 * @param	string $url							The URL to call.
 	 * @param	array $parameters					The parameters that should be passes.
 	 * @param	string[optional] $method			Which method should be used?
+	 * @param	string[optional] $file				Path to the file that should be posted.
 	 * @param	string[optional] $authorization		Should the call authorize itself.
 	 */
 	private function doCall($url, array $parameters = null, $method = 'GET', $file = null, $authorization = false)
@@ -279,8 +280,6 @@ class Facebook
 
 		// append access token
 		$parameters['access_token'] = $this->getToken();
-//		if(strpos($url, '?') != false) $url .= '&access_token=' . $this->getToken();
-//		else $url .= '?access_token=' . $this->getToken();
 
 		// set options
 		$options[CURLOPT_URL] = $url;
@@ -620,7 +619,7 @@ class Facebook
 			}
 
 			// fallback
-			throw new FacebookException('Invalid JSON-response. ');
+			throw new FacebookException('Invalid JSON-response.');
 		}
 
 		// store the token for our use
