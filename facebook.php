@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Facebook class
  *
@@ -6,6 +7,9 @@
  *
  * The class is documented in the file itself. If you find any bugs help me out and report them. Reporting can be done by sending an email to php-facebook-bugs[at]verkoyen[dot]eu.
  * If you report a bug, make sure you give me enough information (include your code).
+ *
+ * Changelog since 1.0.0
+ * - API-key isn't used anymore
  *
  * License
  * Copyright (c) Tijs Verkoyen. All rights reserved.
@@ -19,7 +23,7 @@
  * This software is provided by the author "as is" and any express or implied warranties, including, but not limited to, the implied warranties of merchantability and fitness for a particular purpose are disclaimed. In no event shall the author be liable for any direct, indirect, incidental, special, exemplary, or consequential damages (including, but not limited to, procurement of substitute goods or services; loss of use, data, or profits; or business interruption) however caused and on any theory of liability, whether in contract, strict liability, or tort (including negligence or otherwise) arising in any way out of the use of this software, even if advised of the possibility of such damage.
  *
  * @author			Tijs Verkoyen <php-facebook@verkoyen.eu>
- * @version			1.0.0
+ * @version			1.0.1
  *
  * @copyright		Copyright (c) Tijs Verkoyen. All rights reserved.
  * @license			BSD License
@@ -39,15 +43,7 @@ class Facebook
 	const API_PORT = 443;
 
 	// current version
-	const VERSION = '1.0.0';
-
-
-	/**
-	 * The API-key
-	 *
-	 * @var	string
-	 */
-	private $apiKey;
+	const VERSION = '1.0.1';
 
 
 	/**
@@ -64,14 +60,6 @@ class Facebook
 	 * @var	string
 	 */
 	private $applicationId;
-
-
-	/**
-	 * cURL instance
-	 *
-	 * @var	resource
-	 */
-	private $curl;
 
 
 	/**
@@ -114,14 +102,12 @@ class Facebook
 	 * Default constructor
 	 *
 	 * @return	void
-	 * @param	string $apiKey				The API-key that has to be used for authentication (see http://facebook.com/developers).
-	 * @param	string $applicationSecret	The API-key that has to be used for authentication (see http://facebook.com/developers).
-	 * @param	string $applicationId		The API-key that has to be used for authentication (see http://facebook.com/developers).
+	 * @param	string $applicationSecret	The API-secret that has to be used for authentication (see http://facebook.com/developers).
+	 * @param	string $applicationId		The Application ID that has to be used for authentication (see http://facebook.com/developers).
 	 */
-	public function __construct($apiKey, $applicationSecret, $applicationId)
+	public function __construct($applicationSecret, $applicationId)
 	{
 		// set some properties
-		$this->setApiKey($apiKey);
 		$this->setApplicationSecret($applicationSecret);
 		$this->setApplicationId($applicationId);
 	}
@@ -165,7 +151,7 @@ class Facebook
 
 		// Facebook adds it timezone offset to the recieved timestamp, so fuck with their code and add the offset that will be substracted
 		$offset = $offset * -1;
-		$dateTime->modify($offset .' seconds');
+		$dateTime->modify($offset . ' seconds');
 
 		// return the dat
 		return $dateTime->format('U');
@@ -194,7 +180,7 @@ class Facebook
 		if($method == 'GET')
 		{
 			// append to url
-			if(!empty($parameters)) $url .= '?'. http_build_query($parameters, null, '&');
+			if(!empty($parameters)) $url .= '?' . http_build_query($parameters, null, '&');
 		}
 
 		// through POST
@@ -205,13 +191,13 @@ class Facebook
 		}
 
 		// prepend
-		$url = self::API_URL .'/'. $url;
+		$url = self::API_URL . '/' . $url;
 
 		// add token
 		if(!$authorization)
 		{
-			if(strpos($url, '?') != false) $url .= '&access_token='. $this->getToken();
-			else $url .= '?access_token='. $this->getToken();
+			if(strpos($url, '?') != false) $url .= '&access_token=' . $this->getToken();
+			else $url .= '?access_token=' . $this->getToken();
 		}
 
 		// set options
@@ -230,10 +216,10 @@ class Facebook
 			$boundary = md5(time());
 
 			// init var
-			$content[] = '--'. $boundary;
+			$content[] = '--' . $boundary;
 
 			// loop parameters and add them
-			foreach($parameters as $key => $value) $content[] = 'Content-Disposition: form-data; name="'. $key .'"'. "\r\n\r\n" . $value . "\r\n" .'--'. $boundary;
+			foreach($parameters as $key => $value) $content[] = 'Content-Disposition: form-data; name="' . $key . '"' . "\r\n\r\n" . $value . "\r\n" . '--' . $boundary;
 
 			// process file
 			$fileInfo = pathinfo($file);
@@ -243,16 +229,16 @@ class Facebook
 			if($fileContent !== false)
 			{
 				// set file
-				$content[] = 'Content-Disposition: form-data; filename="'. $fileInfo['basename'] .'"' ."\r\n" . 'Content-Type: '. $mimeType . "\r\n\r\n" . $fileContent ."\r\n--". $boundary;
+				$content[] = 'Content-Disposition: form-data; filename="' . $fileInfo['basename'] . '"' ."\r\n" . 'Content-Type: ' . $mimeType . "\r\n\r\n" . $fileContent ."\r\n--". $boundary;
 
 				// end
-				$content[] = array_pop($content) .'--';
+				$content[] = array_pop($content) . '--';
 				$content = implode("\r\n", $content);
 
 				// build headers
 				$header[] = 'Content-Type: multipart/form-data; boundary=' . $boundary;
 				$header[] = 'MIME-version: 1.0';
-				$header[] = 'Content-Length: '. strlen($content);
+				$header[] = 'Content-Length: ' . strlen($content);
 
 				// set options
 				$options[CURLOPT_HTTPHEADER] = $header;
@@ -303,7 +289,7 @@ class Facebook
 			$message = (isset($json['error']['message'])) ? $json['error']['message'] : '';
 
 			// build real message
-			if($type != '') $message = trim($type .': '. $message);
+			if($type != '') $message = trim($type . ': ' . $message);
 
 			// throw error
 			throw new FacebookException($message);
@@ -330,15 +316,15 @@ class Facebook
 		$queryString = '';
 
 		// append to url
-		if($file === null) $url .= '?'. http_build_query($parameters, null, '&');
+		if($file === null) $url .= '?' . http_build_query($parameters, null, '&');
 
 		// prepend
-		$url = self::REST_API_URL .'/'. $url;
+		$url = self::REST_API_URL . '/' . $url;
 
 		// append access token
 		$parameters['access_token'] = $this->getToken();
-//		if(strpos($url, '?') != false) $url .= '&access_token='. $this->getToken();
-//		else $url .= '?access_token='. $this->getToken();
+//		if(strpos($url, '?') != false) $url .= '&access_token=' . $this->getToken();
+//		else $url .= '?access_token=' . $this->getToken();
 
 		// set options
 		$options[CURLOPT_URL] = $url;
@@ -358,10 +344,10 @@ class Facebook
 			$boundary = md5(time());
 
 			// init var
-			$content[] = '--'. $boundary;
+			$content[] = '--' . $boundary;
 
 			// loop parameters and add them
-			foreach($parameters as $key => $value) $content[] = 'Content-Disposition: form-data; name="'. $key .'"'. "\r\n\r\n" . $value . "\r\n" .'--'. $boundary;
+			foreach($parameters as $key => $value) $content[] = 'Content-Disposition: form-data; name="' . $key . '"' . "\r\n\r\n" . $value . "\r\n" . '--' . $boundary;
 
 			// process file
 			$fileInfo = pathinfo($file);
@@ -371,16 +357,16 @@ class Facebook
 			if($fileContent !== false)
 			{
 				// set file
-				$content[] = 'Content-Disposition: form-data; filename="'. $fileInfo['basename'] .'"' ."\r\n" . 'Content-Type: '. $mimeType . "\r\n\r\n" . $fileContent ."\r\n--". $boundary;
+				$content[] = 'Content-Disposition: form-data; filename="' . $fileInfo['basename'] . '"' ."\r\n" . 'Content-Type: ' . $mimeType . "\r\n\r\n" . $fileContent ."\r\n--". $boundary;
 
 				// end
-				$content[] = array_pop($content) .'--';
+				$content[] = array_pop($content) . '--';
 				$content = implode("\r\n", $content);
 
 				// build headers
 				$header[] = 'Content-Type: multipart/form-data; boundary=' . $boundary;
 				$header[] = 'MIME-version: 1.0';
-				$header[] = 'Content-Length: '. strlen($content);
+				$header[] = 'Content-Length: ' . strlen($content);
 
 				// set options
 				$options[CURLOPT_HTTPHEADER] = $header;
@@ -461,7 +447,7 @@ class Facebook
 	private function getToken()
 	{
 		// no token available
-		if($this->token == null) return $this->getApplicationId() .'|'. $this->getApplicationSecret();
+		if($this->token == null) return $this->getApplicationId() . '|' . $this->getApplicationSecret();
 
 		// real token
 		return $this->token;
@@ -487,7 +473,7 @@ class Facebook
 	 */
 	public function getUserAgent()
 	{
-		return (string) 'PHP Facebook/'. self::VERSION .' '. $this->userAgent;
+		return (string) 'PHP Facebook/' . self::VERSION . ' ' . $this->userAgent;
 	}
 
 
@@ -671,14 +657,14 @@ class Facebook
 				$message = (isset($json['error']['message'])) ? $json['error']['message'] : '';
 
 				// build real message
-				if($type != '') $message = trim($type .': '. $message);
+				if($type != '') $message = trim($type . ': ' . $message);
 
 				// throw error
 				throw new FacebookException($message);
 			}
 
 			// fallback
-			throw new FacebookException('Invalid JSON-response.');
+			throw new FacebookException('Invalid JSON-response. ');
 		}
 
 		// store the token for our use
@@ -697,7 +683,7 @@ class Facebook
 	public function getCookie()
 	{
 		// build the cookie name
-		$cookieName = 'fbs_'. $this->getApplicationId();
+		$cookieName = 'fbs_' . $this->getApplicationId();
 
 		// validate
 		if(!isset($_COOKIE[$cookieName])) return false;
@@ -718,7 +704,7 @@ class Facebook
 		// loop data
 		foreach($data as $key => $value)
 		{
-			if($key != 'sig') $payload .= $key .'='. $value;
+			if($key != 'sig') $payload .= $key . '=' . $value;
 		}
 
 		// validate data
