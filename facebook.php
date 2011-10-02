@@ -9,7 +9,8 @@
  * If you report a bug, make sure you give me enough information (include your code).
  *
  * Changelog since 1.0.0
- * - API-key isn't used anymore
+ * - API-key isn't used anymore.
+ * - Removed datefunction, because it isn't used anymore.
  *
  * License
  * Copyright (c) Tijs Verkoyen. All rights reserved.
@@ -110,51 +111,6 @@ class Facebook
 		// set some properties
 		$this->setApplicationSecret($applicationSecret);
 		$this->setApplicationId($applicationId);
-	}
-
-
-	/**
-	 * Default destructor
-	 *
-	 * @return	void
-	 */
-	public function __destruct()
-	{
-		// close the curl-instance if needed
-		if($this->curl !== null) curl_close($this->curl);
-	}
-
-
-	/**
-	 * Convert a GMT-timestamp into a Facebook-timestamp
-	 * Inspired on http://forum.developers.facebook.com/viewtopic.php?pid=129685
-	 *
-	 * @return	string			A string that Facebook understands
-	 * @param	int $timestamp	The GMT-timestamp
-	 */
-	public static function createFacebookDate($timestamp)
-	{
-		// redefine
-		$timestamp = (int) $timestamp;
-
-		// create string
-		$dateString = date('r', $timestamp);
-
-		// create object
-		$dateTime = new DateTime($dateString);
-
-		// set timezone
-		$dateTime->setTimezone(new DateTimeZone('America/Los_Angeles'));
-
-		// get offset
-		$offset = $dateTime->getOffset();
-
-		// Facebook adds it timezone offset to the recieved timestamp, so fuck with their code and add the offset that will be substracted
-		$offset = $offset * -1;
-		$dateTime->modify($offset . ' seconds');
-
-		// return the dat
-		return $dateTime->format('U');
 	}
 
 
