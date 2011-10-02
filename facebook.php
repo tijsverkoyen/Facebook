@@ -430,21 +430,20 @@ class Facebook
 
 	/**
 	 * Process the response array
+	 * @remark	not fully implemented yet.
 	 *
 	 * @return	array
-	 * @param	array $response
+	 * @param	array $response		The response that was retrieved.
 	 */
 	private function processResponse(array $response)
 	{
 		// type available?
 		if(isset($response['type']))
 		{
+			// base on the type we should handle the data
 			switch($response['type'])
 			{
 				case 'event':
-//					if(isset($response['start_time'])) $response['start_time'] = strtotime($response['start_time']);
-//					if(isset($response['end_time'])) $response['end_time'] = strtotime($response['end_time']);
-//					if(isset($response['updated_time'])) $response['updated_time'] = strtotime($response['updated_time']);
 				break;
 			}
 		}
