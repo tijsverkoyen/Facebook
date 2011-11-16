@@ -8,6 +8,9 @@
  * The class is documented in the file itself. If you find any bugs help me out and report them. Reporting can be done by sending an email to php-facebook-bugs[at]verkoyen[dot]eu.
  * If you report a bug, make sure you give me enough information (include your code).
  *
+ * Changelog since 1.0.1
+ * - Made some methods public
+ *
  * Changelog since 1.0.0
  * - API-key isn't used anymore.
  * - Removed datefunction, because it isn't used anymore.
@@ -375,7 +378,7 @@ class Facebook
 	 *
 	 * @return	string
 	 */
-	private function getApplicationId()
+	public function getApplicationId()
 	{
 		return $this->applicationId;
 	}
@@ -386,7 +389,7 @@ class Facebook
 	 *
 	 * @return	string
 	 */
-	private function getApplicationSecret()
+	public function getApplicationSecret()
 	{
 		return $this->applicationSecret;
 	}
