@@ -11,6 +11,7 @@
  * Changelog since 1.0.1
  * - Made some methods public.
  * - Added a method (getSignedRequest) to process the signed request of a Facebook Application.
+ * - Made some methods protected, so the classes is somewhat more extendable.
  *
  * Changelog since 1.0.0
  * - API-key isn't used anymore.
@@ -401,7 +402,7 @@ class Facebook
 	 *
 	 * @return	string
 	 */
-	private function getToken()
+	protected function getToken()
 	{
 		// no token available
 		if($this->token == null) return $this->getApplicationId() . '|' . $this->getApplicationSecret();
@@ -441,7 +442,7 @@ class Facebook
 	 * @return	array
 	 * @param	array $response		The response that was retrieved.
 	 */
-	private function processResponse(array $response)
+	protected function processResponse(array $response)
 	{
 		// type available?
 		if(isset($response['type']))
@@ -477,7 +478,7 @@ class Facebook
 	 * @return	void
 	 * @param	string $id
 	 */
-	private function setApplicationId($id)
+	protected function setApplicationId($id)
 	{
 		$this->applicationId = (string) $id;
 	}
@@ -489,7 +490,7 @@ class Facebook
 	 * @return	void
 	 * @param	string $secret
 	 */
-	private function setApplicationSecret($secret)
+	protected function setApplicationSecret($secret)
 	{
 		$this->applicationSecret = (string) $secret;
 	}
