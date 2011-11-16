@@ -9,7 +9,8 @@
  * If you report a bug, make sure you give me enough information (include your code).
  *
  * Changelog since 1.0.1
- * - Made some methods public
+ * - Made some methods public.
+ * - Added a method (getSignedRequest) to process the signed request of a Facebook Application.
  *
  * Changelog since 1.0.0
  * - API-key isn't used anymore.
@@ -675,6 +676,41 @@ class Facebook
 
 			// validate data
 			if(md5($payload . $this->getApplicationSecret()) != $data['sig']) return false;
+		}
+
+		// return
+		return $data;
+	}
+
+
+	/**
+	 * Get the signed request from a Facebook application tab and process it
+	 *
+	 * @return	array	If invalid or nothing available it will return false.
+	 */
+	public function getSignedRequest()
+	{
+		// validate
+		if(!isset($_POST['signed_request']) && !isset($_POST['signed_request'])) return false;
+
+		// init var
+		$data = array();
+
+		list($encodedSignature, $payload) = explode('.', $_POST['signed_request'], 2);
+
+		// decode the data
+		$data = json_decode(base64_decode(strtr($payload, '-_', '+/')), true);
+
+		if(isset($data['oauth_token']))
+		{
+			try
+			{
+				$this->setToken($data['oauth_token']);
+			}
+			catch(FacebookException $e)
+			{
+				if(substr_count($e->getMessage(), 'Code was invalid or expired.')) return $data;
+			}
 		}
 
 		// return
