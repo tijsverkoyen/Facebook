@@ -1,0 +1,1 @@
+!!! DONT USE THIS CLASS, it is deprecated. Use: https://github.com/facebook/facebook-php-sdk
